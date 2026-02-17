@@ -28,7 +28,7 @@ app.post('/send-email', async (req, res) => {
 
     await transporter.sendMail({
       from: process.env.OUTLOOK_USER,
-      to: '你的Epson信箱@print.epsonconnect.com',
+      to: 'rgc4814ep67r98@print.epsonconnect.com',
       subject: 'Wedding Photo',
       text: 'Please print this photo.',
       attachments: [
