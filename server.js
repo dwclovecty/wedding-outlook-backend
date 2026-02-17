@@ -2,8 +2,9 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 
 const app = express();
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '15mb' }));
 
+// ⭐ Outlook SMTP 設定
 const transporter = nodemailer.createTransport({
   host: 'smtp.office365.com',
   port: 587,
@@ -14,16 +15,23 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+// 測試首頁
 app.get('/', (req, res) => {
   res.send('Wedding Outlook Backend Running!');
 });
 
+// 健康檢查
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+// 寄信 API
 app.post('/send-email', async (req, res) => {
   try {
     const { base64Photo } = req.body;
 
-    if (!base64Photo) {
-      return res.status(400).send('No photo provided');
+    if (!base64Photo || base64Photo.length < 100) {
+      return res.status(400).json({ error: '無效的照片資料' });
     }
 
     await transporter.sendMail({
@@ -41,10 +49,15 @@ app.post('/send-email', async (req, res) => {
     });
 
     res.json({ success: true });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).send(err.message);
+    console.error('寄送錯誤:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 
-app.listen(process.env.PORT || 3000);
+// ⭐ Render 必須使用 PORT
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
