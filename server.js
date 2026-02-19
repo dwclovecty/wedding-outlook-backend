@@ -1,7 +1,11 @@
 const express = require('express');
 const nodemailer = require('nodemailer');
+const cors = require('cors');
 
 const app = express();
+
+// ⭐ 加上 CORS（關鍵）
+app.use(cors());
 app.use(express.json({ limit: '15mb' }));
 
 // ⭐ Outlook SMTP 設定
@@ -28,6 +32,8 @@ app.get('/health', (req, res) => {
 // 寄信 API
 app.post('/send-email', async (req, res) => {
   try {
+    console.log("收到寄信請求");
+
     const { base64Photo } = req.body;
 
     if (!base64Photo || base64Photo.length < 100) {
@@ -48,6 +54,7 @@ app.post('/send-email', async (req, res) => {
       ]
     });
 
+    console.log("寄送成功");
     res.json({ success: true });
 
   } catch (err) {
