@@ -1,18 +1,24 @@
 const express = require('express');
 const cors = require('cors');
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json({ limit: '15mb' }));
 
-// ⭐ 初始化 Resend
-const resend = new Resend(process.env.RESEND_API_KEY);
+// ⭐ 建立 Gmail SMTP transporter
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 // 測試首頁
 app.get('/', (req, res) => {
-  res.send('Wedding Resend Backend Running!');
+  res.send('Wedding Gmail Backend Running!');
 });
 
 // 健康檢查
@@ -31,8 +37,8 @@ app.post('/send-email', async (req, res) => {
       return res.status(400).json({ error: '無效的照片資料' });
     }
 
-    await resend.emails.send({
-      from: 'Wedding Print <onboarding@resend.dev>',
+    const mailOptions = {
+      from: `"Wedding Print" <${process.env.EMAIL_USER}>`,
       to: 'rgc4814ep67r98@print.epsonconnect.com',
       subject: 'Wedding Photo',
       html: '<p>Please print this photo.</p>',
@@ -40,9 +46,12 @@ app.post('/send-email', async (req, res) => {
         {
           filename: 'photo.jpg',
           content: base64Photo,
+          encoding: 'base64',
         }
       ]
-    });
+    };
+
+    await transporter.sendMail(mailOptions);
 
     console.log("寄送成功");
     res.json({ success: true });
