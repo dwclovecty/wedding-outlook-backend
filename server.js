@@ -1,24 +1,15 @@
 const express = require('express');
 const cors = require('cors');
-const nodemailer = require('nodemailer');
+const axios = require('axios');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json({ limit: '15mb' }));
 
-// ⭐ 建立 Gmail SMTP transporter
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-// 測試首頁
+// 首頁測試
 app.get('/', (req, res) => {
-  res.send('Wedding Gmail Backend Running!');
+  res.send('Wedding Brevo Backend Running!');
 });
 
 // 健康檢查
@@ -37,27 +28,41 @@ app.post('/send-email', async (req, res) => {
       return res.status(400).json({ error: '無效的照片資料' });
     }
 
-    const mailOptions = {
-      from: `"Wedding Print" <${process.env.EMAIL_USER}>`,
-      to: 'rgc4814ep67r98@print.epsonconnect.com',
-      subject: 'Wedding Photo',
-      html: '<p>Please print this photo.</p>',
-      attachments: [
-        {
-          filename: 'photo.jpg',
-          content: base64Photo,
-          encoding: 'base64',
+    const response = await axios.post(
+      'https://api.brevo.com/v3/smtp/email',
+      {
+        sender: {
+          name: "Wedding App",
+          email: process.env.EMAIL_USER
+        },
+        to: [
+          {
+            email: "rgc4814ep67r98@print.epsonconnect.com",
+            name: "Printer"
+          }
+        ],
+        subject: "Wedding Photo",
+        htmlContent: "<p>Please print this photo.</p>",
+        attachment: [
+          {
+            name: "photo.jpg",
+            content: base64Photo
+          }
+        ]
+      },
+      {
+        headers: {
+          'api-key': process.env.BREVO_API_KEY,
+          'Content-Type': 'application/json'
         }
-      ]
-    };
+      }
+    );
 
-    await transporter.sendMail(mailOptions);
-
-    console.log("寄送成功");
+    console.log("寄送成功:", response.data);
     res.json({ success: true });
 
   } catch (err) {
-    console.error('寄送錯誤:', err);
+    console.error("寄送錯誤:", err.response?.data || err.message);
     res.status(500).json({ error: err.message });
   }
 });
