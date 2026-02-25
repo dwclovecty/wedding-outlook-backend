@@ -37,7 +37,7 @@ app.post('/send-email', async (req, res) => {
         },
         to: [
           {
-            email: "rgc4814ep67r98@print.epsonconnect.com",
+            email: process.env.EPSON_EMAIL,
             name: "Printer"
           }
         ],
